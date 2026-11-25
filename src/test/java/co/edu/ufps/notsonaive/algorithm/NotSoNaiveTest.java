@@ -173,4 +173,90 @@ class NotSoNaiveTest {
         }
         return sb.toString();
     }
+
+    private static int[] visitedJ(SearchStatistics s) {
+        int[] out = new int[s.getTrace().getTamanio()];
+        int k = 0;
+        for (TraceStep t : s.getTrace()) {
+            out[k++] = t.j();
+        }
+        return out;
+    }
+
+    @Test
+    @DisplayName("Trace of the Lecroq example: visited j values, stop index and final j")
+    void traceOfLecroqExample() {
+        SearchStatistics s = new NotSoNaive("GCAGAGAG").searchWithTrace("GCATCGCAGAGAGTAT");
+        assertArrayEquals(new int[]{5}, s.positionsArray());
+        assertEquals(1, s.getK());
+        assertEquals(2, s.getEll());
+        assertArrayEquals(new int[]{0, 2, 3, 5, 7, 8}, visitedJ(s));
+        assertEquals(9, s.getFinalJ());
+        TraceStep first = s.getTrace().get(0);
+        assertEquals(TraceStep.Outcome.MISMATCH_REST, first.outcome());
+        assertEquals(3, first.stopI(), "block j = 0 stops with a mismatch at i = 3");
+        TraceStep match = s.getTrace().get(3);
+        assertEquals(5, match.j());
+        assertEquals(TraceStep.Outcome.MATCH, match.outcome());
+        assertEquals(8, match.stopI(), "i reaches m on a full match");
+    }
+
+    @Test
+    void traceOfOverlappingAs() {
+        SearchStatistics s = new NotSoNaive("AA").searchWithTrace("AAAAAA");
+        assertArrayEquals(new int[]{0, 1, 2, 3, 4}, visitedJ(s));
+        assertEquals(5, s.getFinalJ());
+        for (TraceStep t : s.getTrace()) {
+            assertEquals(TraceStep.Outcome.MATCH, t.outcome());
+            assertEquals(2, t.stopI(), "m = 2: the inner loop does not run, i stays at 2 = m");
+            assertEquals(1, t.shift());
+        }
+    }
+
+    @Test
+    void finalJWhenThePatternIsLongerThanTheText() {
+        SearchStatistics s = new NotSoNaive("ABCDE").searchWithTrace("ABC");
+        assertEquals(0, s.getTrace().getTamanio());
+        assertEquals(0, s.getFinalJ());
+    }
+
+    @Test
+    void traceOfOneCharacterPattern() {
+        SearchStatistics s = new NotSoNaive("b").searchWithTrace("abcb");
+        assertArrayEquals(new int[]{0, 1, 2, 3}, visitedJ(s));
+        assertEquals(4, s.getFinalJ());
+        assertArrayEquals(new int[]{1, 3}, s.positionsArray());
+    }
+
+    @Test
+    @DisplayName("Randomized: the trace matches are exactly the reported positions and replay the search")
+    void traceAgreesWithPositions() {
+        Random rnd = new Random(7L);
+        for (int iter = 0; iter < 5_000; iter++) {
+            String y = randomString(rnd, "ab", rnd.nextInt(30));
+            String x = randomString(rnd, "ab", 1 + rnd.nextInt(5));
+            SearchStatistics s = new NotSoNaive(x).searchWithTrace(y);
+            List<Integer> fromTrace = new ArrayList<>();
+            int expectedJ = 0;
+            for (TraceStep t : s.getTrace()) {
+                assertEquals(expectedJ, t.j());
+                expectedJ += t.shift();
+                if (t.outcome() == TraceStep.Outcome.MATCH) {
+                    fromTrace.add(t.j());
+                }
+                if (x.length() > 1 && t.outcome() != TraceStep.Outcome.MISMATCH_SECOND) {
+                    // replay the inner loop from stopI: x[2..stopI-1] equal, x[stopI] different (if < m)
+                    for (int i = 2; i < t.stopI(); i++) {
+                        assertEquals(x.charAt(i), y.charAt(t.j() + i));
+                    }
+                    if (t.stopI() < x.length()) {
+                        assertNotEquals(x.charAt(t.stopI()), y.charAt(t.j() + t.stopI()));
+                    }
+                }
+            }
+            assertEquals(expectedJ, s.getFinalJ());
+            assertArrayEquals(fromTrace.stream().mapToInt(Integer::intValue).toArray(), s.positionsArray(),
+                    () -> "text=" + y + " pattern=" + x);
+        }
+    }
 }

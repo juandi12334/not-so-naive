@@ -24,6 +24,7 @@ public class DeliveryController {
     public String delivery(Model model) {
         model.addAttribute("available", archiveService.isAvailable());
         model.addAttribute("archiveName", ProjectArchiveService.ARCHIVE_NAME);
+        model.addAttribute("activePage", "delivery");
         return "delivery";
     }
 

@@ -99,7 +99,7 @@ public final class NotSoNaive {
         long attempts = 0;
 
         if (m > n) { // also covers the empty text
-            return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace);
+            return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace, 0);
         }
 
         if (m == 1) {
@@ -111,9 +111,9 @@ public final class NotSoNaive {
                 if (match) {
                     positions.insertarAlFinal(j);
                 }
-                record(trace, j, match ? TraceStep.Outcome.MATCH : TraceStep.Outcome.MISMATCH_FIRST, 1, 1);
+                record(trace, j, match ? TraceStep.Outcome.MATCH : TraceStep.Outcome.MISMATCH_FIRST, 1, 1, 0);
             }
-            return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace);
+            return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace, n);
         }
 
         int j = 0;
@@ -122,7 +122,7 @@ public final class NotSoNaive {
             long before = comparisons;
             comparisons++;
             if (x[1] != y[j + 1]) {
-                record(trace, j, TraceStep.Outcome.MISMATCH_SECOND, k, comparisons - before);
+                record(trace, j, TraceStep.Outcome.MISMATCH_SECOND, k, comparisons - before, 1);
                 j += k;
             } else {
                 // memcmp(x + 2, y + j + 2, m - 2): compare positions 2 .. m-1
@@ -147,17 +147,17 @@ public final class NotSoNaive {
                 } else {
                     outcome = TraceStep.Outcome.MISMATCH_REST;
                 }
-                record(trace, j, outcome, ell, comparisons - before);
+                record(trace, j, outcome, ell, comparisons - before, i);
                 j += ell;
             }
         }
-        return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace);
+        return new SearchStatistics(positions, comparisons, attempts, k, ell, m, n, trace, j);
     }
 
     private static void record(ListaCD<TraceStep> trace, int j, TraceStep.Outcome outcome,
-                               int shift, long comparisons) {
+                               int shift, long comparisons, int stopI) {
         if (trace != null && trace.getTamanio() < MAX_TRACE_STEPS) {
-            trace.insertarAlFinal(new TraceStep(j, outcome, shift, comparisons));
+            trace.insertarAlFinal(new TraceStep(j, outcome, shift, comparisons, stopI));
         }
     }
 

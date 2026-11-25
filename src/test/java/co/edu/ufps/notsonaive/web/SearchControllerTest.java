@@ -99,4 +99,65 @@ class SearchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/zip"));
     }
+
+    @Test
+    void typedTextIsSearchedLikeAFile() throws Exception {
+        mvc.perform(multipart("/api/search").param("text", "GCATCGCAGAGAGTAT").param("pattern", "GCAGAGAG"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fileName").value("typed-text.txt"))
+                .andExpect(jsonPath("$.matchCount").value(1))
+                .andExpect(jsonPath("$.positions[0]").value(5))
+                .andExpect(jsonPath("$.finalJ").value(9))
+                .andExpect(jsonPath("$.trace[0].j").value(0))
+                .andExpect(jsonPath("$.trace[0].stopI").value(3))
+                .andExpect(jsonPath("$.trace[1].j").value(2))
+                .andExpect(jsonPath("$.traceLimit").value(300));
+    }
+
+    @Test
+    void typedTextPdf() throws Exception {
+        mvc.perform(multipart("/api/pdf").param("text", "AAAAAA").param("pattern", "AA"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("X-Match-Count", "5"));
+    }
+
+    @Test
+    void longTextHasNoTrace() throws Exception {
+        mvc.perform(multipart("/api/search").param("text", "A".repeat(301)).param("pattern", "AA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matchCount").value(300))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+    }
+
+    @Test
+    void nonAsciiTypedTextIsRejected() throws Exception {
+        mvc.perform(multipart("/api/search").param("text", "a\u00f1o").param("pattern", "a"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value(containsString("not ASCII")));
+    }
+
+    @Test
+    void algorithmPageAndFooter() throws Exception {
+        mvc.perform(get("/algorithm"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Why a shift of 2 is safe")))
+                .andExpect(content().string(containsString("public static List&lt;Integer&gt; notSoNaive")))
+                .andExpect(content().string(containsString("https://github.com/juandi12334/nat-so-naive")))
+                .andExpect(content().string(containsString("Marco Antonio Adarme Jaimes")))
+                .andExpect(content().string(containsString("juandiegorore@ufps.edu.co")))
+                .andExpect(content().string(containsString("San Jos\u00e9 de C\u00facuta")));
+    }
+
+    @Test
+    void simulatorPageHasNoRemovedSections() throws Exception {
+        String html = mvc.perform(get("/")).andReturn().getResponse().getContentAsString();
+        for (String gone : new String[]{"About the algorithm", "0-based character indexes", "PDF report",
+                "Execution time", "Attempts (windows)", "<table class=\"trace\""}) {
+            org.junit.jupiter.api.Assertions.assertFalse(html.contains(gone), gone);
+        }
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Or type your text"));
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Generate PDF"));
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Juan Diego Rojas Rey"));
+    }
 }

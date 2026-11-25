@@ -94,4 +94,21 @@ class FileServiceTest {
         TextDocument doc = service.read(file("all.txt", sb.toString().getBytes(StandardCharsets.US_ASCII)));
         assertEquals(sb.toString(), doc.content());
     }
+
+    @Test
+    void typedTextIsAcceptedAndNormalized() {
+        TextDocument doc = service.fromTypedText("BANANA\r\nANA");
+        assertEquals("BANANA\nANA", doc.content());
+        assertEquals(FileService.TYPED_TEXT_NAME, doc.fileName());
+    }
+
+    @Test
+    void typedTextRules() {
+        assertThrows(InvalidFileException.class, () -> service.fromTypedText(""));
+        assertThrows(InvalidFileException.class, () -> service.fromTypedText(null));
+        InvalidFileException e = assertThrows(InvalidFileException.class, () -> service.fromTypedText("ok\nCanci\u00f3n"));
+        assertTrue(e.getMessage().contains("line 2, column 6"), e.getMessage());
+        FileService small = new FileService(5);
+        assertThrows(InvalidFileException.class, () -> small.fromTypedText("123456"));
+    }
 }

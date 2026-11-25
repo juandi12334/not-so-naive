@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title}">Not So Naive · UFPS</title>
+    <meta name="description" content="Not So Naive exact string matching simulator implemented in Java (Spring Boot + PDFBox). UFPS - Analysis of Algorithms.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a8121a'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='%23fff' text-anchor='middle'%3ENSN%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="masthead" th:fragment="header(heading, seal)">
+    <div class="wrap masthead__inner">
+        <div class="seal" aria-hidden="true"><span th:text="${seal}">x[1]</span></div>
+        <div class="masthead__text">
+            <p class="kicker">FRANCISCO DE PAULA SANTANDER UNIVERSITY</p>
+            <p class="program">SYSTEMS ENGINEERING PROGRAM</p>
+            <h1 th:text="${heading}">Not So Naive</h1>
+            <dl class="meta">
+                <div><dt>COURSE</dt><dd>ANALYSIS OF ALGORITHMS</dd></div>
+                <div><dt>ALGORITHM</dt><dd>NOT SO NAIVE</dd></div>
+                <div><dt>STUDENT</dt><dd>JUAN DIEGO ROJAS REY</dd></div>
+            </dl>
+        </div>
+        <nav class="masthead__nav" aria-label="Pages">
+            <a th:href="@{/}" href="/" th:classappend="${activePage == 'simulator'} ? 'is-active'"
+               th:attr="aria-current=${activePage == 'simulator'} ? 'page'">Simulator</a>
+            <a th:href="@{/algorithm}" href="/algorithm" th:classappend="${activePage == 'algorithm'} ? 'is-active'"
+               th:attr="aria-current=${activePage == 'algorithm'} ? 'page'">Algorithm</a>
+            <a th:href="@{/delivery}" href="/delivery" th:classappend="${activePage == 'delivery'} ? 'is-active'"
+               th:attr="aria-current=${activePage == 'delivery'} ? 'page'">Delivery (ZIP)</a>
+        </nav>
+    </div>
+</header>
+
+<footer class="footer" th:fragment="footer">
+    <div class="wrap">
+        <div class="footer__grid">
+            <dl class="footer__col">
+                <div><dt>Student</dt><dd th:text="${site.student}">Juan Diego Rojas Rey</dd></div>
+                <div><dt>Email</dt><dd><a th:href="'mailto:' + ${site.email}" th:text="${site.email}">email</a></dd></div>
+                <div><dt>Date</dt><dd th:text="${site.date}">date</dd></div>
+            </dl>
+            <dl class="footer__col">
+                <div><dt>Course</dt><dd th:text="${site.course}">course</dd></div>
+                <div><dt>Program</dt><dd th:text="${site.program}">program</dd></div>
+                <div><dt>Professor</dt><dd th:text="${site.professor}">professor</dd></div>
+            </dl>
+            <dl class="footer__col">
+                <div><dt>University</dt><dd th:text="${site.university}">university</dd></div>
+                <div><dt>Location</dt><dd th:text="${site.location}">location</dd></div>
+                <div><dt>Repository</dt><dd><a th:href="${site.repository}" th:text="${site.repository}"
+                                               target="_blank" rel="noopener">repository</a></dd></div>
+            </dl>
+        </div>
+        <p class="footer__tech" th:text="${site.techLine}">Java 21 · Spring Boot · Apache PDFBox · SEED</p>
+    </div>
+</footer>
+
+</body>
+</html>

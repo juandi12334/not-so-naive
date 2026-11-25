@@ -1,38 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Not So Naive · String Matching Simulator · UFPS</title>
-    <meta name="description" content="Not So Naive exact string matching simulator implemented in Java (Spring Boot + PDFBox). UFPS - Analysis of Algorithms.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a8121a'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='%23fff' text-anchor='middle'%3ENSN%3C/text%3E%3C/svg%3E">
-</head>
-<body th:attr="data-max-bytes=${maxFileBytes}" data-max-bytes="2097152">
+<head th:replace="~{fragments/layout :: head('Not So Naive · String Matching Simulator · UFPS')}"></head>
+<body th:attr="data-max-bytes=${maxFileBytes},data-trace-limit=${traceLimit}" data-max-bytes="2097152" data-trace-limit="300">
 
-<header class="masthead">
-    <div class="wrap masthead__inner">
-        <div class="seal" aria-hidden="true"><span>x[1]</span></div>
-        <div class="masthead__text">
-            <p class="kicker">FRANCISCO DE PAULA SANTANDER UNIVERSITY</p>
-            <p class="program">SYSTEMS ENGINEERING PROGRAM</p>
-            <h1>Not So Naive</h1>
-            <dl class="meta">
-                <div><dt>COURSE</dt><dd>ANALYSIS OF ALGORITHMS</dd></div>
-                <div><dt>ALGORITHM</dt><dd>NOT SO NAIVE</dd></div>
-                <div><dt>STUDENT</dt><dd>JUAN DIEGO ROJAS REY</dd></div>
-            </dl>
-        </div>
-        <nav class="masthead__nav" aria-label="Sections">
-            <a href="#workspace">Simulator</a>
-            <a href="#theory">Algorithm</a>
-            <a href="/delivery" th:href="@{/delivery}">Delivery (ZIP)</a>
-        </nav>
-    </div>
-</header>
+<header th:replace="~{fragments/layout :: header('Not So Naive', 'x[1]')}"></header>
 
 <main class="wrap" id="workspace">
 
@@ -45,9 +16,9 @@
         </div>
     </section>
 
-    <div class="grid">
-        <!-- 2 + 3 + 4: input -->
-        <section class="card card--input" aria-labelledby="inTitle">
+    <!-- Top row: text, pattern, actions -->
+    <div class="top-grid">
+        <section class="card" aria-labelledby="inTitle">
             <h2 id="inTitle"><span class="step">1</span> Text file</h2>
             <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-describedby="dzHelp">
                 <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6h14l10 10v24a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M28 6v10h10M18 26h12M18 32h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -66,7 +37,14 @@
             </div>
             <p id="fileError" class="field-error" role="alert" hidden></p>
 
-            <h2 class="mt"><span class="step">2</span> Pattern</h2>
+            <label for="typedText" class="typed-label">Or type your text</label>
+            <textarea id="typedText" class="input typed-text" rows="3" spellcheck="false"
+                      placeholder="Type or paste your text here"></textarea>
+            <p id="textError" class="field-error" role="alert" hidden></p>
+        </section>
+
+        <section class="card" aria-labelledby="patTitle">
+            <h2 id="patTitle"><span class="step">2</span> Pattern</h2>
             <label for="pattern" class="label">Text to search (exact, case-sensitive)</label>
             <input id="pattern" class="input" type="text" maxlength="1000" autocomplete="off" spellcheck="false"
                    placeholder="e.g. ANA" aria-describedby="patternPreview">
@@ -76,177 +54,66 @@
                 <span id="patternLen" class="pattern-preview__len"></span>
             </div>
             <p id="patternError" class="field-error" role="alert" hidden></p>
+        </section>
 
+        <section class="card card--actions" aria-label="Actions">
             <button type="button" id="searchBtn" class="btn btn--primary btn--block" disabled>
                 <span class="btn__label">Run Not So Naive search</span>
                 <span class="spinner" aria-hidden="true"></span>
             </button>
-            <p class="hint">Positions are 0-based character indexes (the first character of the file is position 0).
-                Line endings are normalized to <code>\n</code>.</p>
-        </section>
-
-        <!-- 5: results -->
-        <section class="card card--results" aria-labelledby="resTitle">
-            <h2 id="resTitle"><span class="step">3</span> Results</h2>
-            <div id="resultsEmpty" class="empty">
-                <p>Results will appear here after the search.</p>
-            </div>
-            <div id="processing" class="processing" hidden>
-                <div class="scan" aria-hidden="true"><span></span></div>
-                <p>Running Not So Naive on the server…</p>
-            </div>
-            <div id="errorBox" class="errorbox" role="alert" hidden>
-                <strong>Processing error</strong>
-                <p id="errorText"></p>
-            </div>
-            <div id="results" hidden>
-                <div class="count">
-                    <span id="matchCount" class="count__value">0</span>
-                    <span class="count__label">occurrences found</span>
-                </div>
-                <dl class="stats">
-                    <div><dt>Pattern</dt><dd><code id="rPattern"></code></dd></div>
-                    <div><dt>File</dt><dd id="rFile"></dd></div>
-                    <div><dt>Execution time</dt><dd id="rTime"></dd></div>
-                    <div><dt>Text length n</dt><dd id="rN"></dd></div>
-                    <div><dt>Pattern length m</dt><dd id="rM"></dd></div>
-                    <div><dt>k / ell</dt><dd id="rKell"></dd></div>
-                    <div><dt>Attempts (windows)</dt><dd id="rAttempts"></dd></div>
-                    <div><dt>Character comparisons</dt><dd id="rComparisons"></dd></div>
-                </dl>
-                <ul id="notices" class="notices"></ul>
-                <h3>Positions <small>(0-based)</small></h3>
-                <div id="positions" class="positions"></div>
-                <div class="pager" id="posPager" hidden>
-                    <button type="button" class="btn btn--small" id="posPrev">‹ Prev</button>
-                    <span id="posPageInfo"></span>
-                    <button type="button" class="btn btn--small" id="posNext">Next ›</button>
-                </div>
-            </div>
+            <button type="button" id="pdfBtn" class="btn btn--secondary btn--block" disabled>
+                <span class="btn__label">Generate PDF</span>
+                <span class="spinner spinner--dark" aria-hidden="true"></span>
+            </button>
+            <p class="hint actions__caption">Downloads the full text as a PDF with every occurrence of the pattern highlighted.</p>
+            <p id="pdfStatus" class="hint actions__status" role="status" aria-live="polite"></p>
         </section>
     </div>
 
-    <!-- 6: highlighted text -->
-    <section class="card" id="previewSection" aria-labelledby="pvTitle" hidden>
-        <div class="card__head">
-            <h2 id="pvTitle"><span class="step">4</span> Text with occurrences highlighted</h2>
-            <div class="navmatch">
-                <button type="button" class="btn btn--small" id="prevMatch" aria-label="Previous occurrence">↑</button>
-                <span id="matchNav">–</span>
-                <button type="button" class="btn btn--small" id="nextMatch" aria-label="Next occurrence">↓</button>
+    <!-- Results -->
+    <section class="card results" aria-label="Results">
+        <div id="resultsEmpty" class="empty"><p>Results will appear here after the search.</p></div>
+        <div id="processing" class="processing" hidden>
+            <div class="scan" aria-hidden="true"><span></span></div>
+            <p>Running Not So Naive on the server…</p>
+        </div>
+        <div id="errorBox" class="errorbox" role="alert" hidden>
+            <strong>Processing error</strong>
+            <p id="errorText"></p>
+        </div>
+        <div id="results" hidden>
+            <div class="results__bar">
+                <span id="occChip" class="occ-chip">Occurrences: 0</span>
+                <div class="results__positions">
+                    <span class="results__label">Positions:</span>
+                    <div id="positions" class="positions"></div>
+                </div>
+                <div class="navmatch">
+                    <button type="button" class="btn btn--small" id="prevMatch" aria-label="Previous occurrence">↑</button>
+                    <span id="matchNav">–</span>
+                    <button type="button" class="btn btn--small" id="nextMatch" aria-label="Next occurrence">↓</button>
+                </div>
             </div>
-        </div>
-        <p class="legend"><mark class="d1">match</mark> exact occurrence returned by Not So Naive ·
-            <mark class="d2">overlap</mark> characters shared by overlapping occurrences</p>
-        <p id="previewNote" class="hint" hidden></p>
-        <pre id="preview" class="preview" tabindex="0"></pre>
-    </section>
-
-    <!-- trace -->
-    <section class="card" id="traceSection" aria-labelledby="trTitle" hidden>
-        <h2 id="trTitle">Step-by-step trace</h2>
-        <p class="hint">Every attempt of the search (shown for texts up to 300 characters). The window
-            <code>y[j..j+m-1]</code> is compared in the order <code>1, 2, …, m-1, 0</code>.</p>
-        <div class="table-scroll">
-            <table class="trace">
-                <thead><tr><th>#</th><th>j</th><th>Window</th><th>Outcome</th><th>Comparisons</th><th>Shift</th></tr></thead>
-                <tbody id="traceBody"></tbody>
-            </table>
+            <p class="legend"><mark class="d1">match</mark> exact occurrence ·
+                <mark class="d2">overlap</mark> characters shared by overlapping occurrences</p>
+            <p id="previewNote" class="hint" hidden></p>
+            <pre id="preview" class="preview" tabindex="0"></pre>
         </div>
     </section>
 
-    <!-- 7: PDF -->
-    <section class="card card--pdf" id="pdfSection" aria-labelledby="pdfTitle" hidden>
-        <div>
-            <h2 id="pdfTitle"><span class="step">5</span> PDF report</h2>
-            <p>A PDF generated on the server with Apache PDFBox: the complete text of the file, preserving line
-                breaks, with every occurrence highlighted at exactly the positions returned by Not So Naive.</p>
-            <p id="pdfStatus" class="hint" role="status" aria-live="polite"></p>
+    <!-- Step-by-step trace -->
+    <section class="card trace-card" id="traceSection" aria-labelledby="trTitle" hidden>
+        <div class="card__head">
+            <h2 id="trTitle">Step-by-step trace</h2>
+            <span id="traceCounter" class="occ-chip" aria-live="polite">Matches: 0</span>
         </div>
-        <div class="pdf-actions">
-            <button type="button" id="pdfBtn" class="btn btn--primary">
-                <span class="btn__label">Generate &amp; download PDF</span>
-                <span class="spinner" aria-hidden="true"></span>
-            </button>
-            <a id="pdfLink" class="btn btn--ghost" hidden>Download again</a>
-        </div>
-    </section>
-
-    <!-- 8: theory -->
-    <section class="card theory" id="theory" aria-labelledby="thTitle">
-        <h2 id="thTitle">About the algorithm</h2>
-        <div class="theory__grid">
-            <article>
-                <h3>Idea</h3>
-                <p>Given a text <code>y</code> of length <em>n</em> and a pattern <code>x</code> of length <em>m</em>,
-                    the algorithm slides a window of length <em>m</em> over the text. Instead of comparing from left to
-                    right like the naive algorithm, each attempt compares the pattern positions in the order
-                    <strong>1, 2, …, m−1</strong> and finally <strong>0</strong>.</p>
-                <p>Looking at <code>x[1]</code> first allows a shift of <strong>two</strong> positions in some cases
-                    without ever skipping an occurrence — hence “not so naive”.</p>
-            </article>
-            <article>
-                <h3>Preprocessing — O(1)</h3>
-                <table class="kell">
-                    <thead><tr><th>Condition</th><th>k</th><th>ell</th></tr></thead>
-                    <tbody>
-                    <tr><td><code>x[0] == x[1]</code></td><td>2</td><td>1</td></tr>
-                    <tr><td><code>x[0] != x[1]</code></td><td>1</td><td>2</td></tr>
-                    </tbody>
-                </table>
-                <p><code>k</code>: shift when <code>x[1] ≠ y[j+1]</code>. <code>ell</code>: shift when
-                    <code>x[1] = y[j+1]</code>, whether or not an occurrence was found.</p>
-            </article>
-            <article class="span2">
-                <h3>Searching phase</h3>
-<pre class="code">j ← 0
-while j ≤ n − m:
-    if x[1] ≠ y[j+1]:
-        j ← j + k
-    else:
-        if x[2..m−1] = y[j+2..j+m−1] and x[0] = y[j]:
-            report j
-        j ← j + ell</pre>
-            </article>
-            <article>
-                <h3>Why a shift of 2 is safe</h3>
-                <p>If <code>x[0]=x[1]</code> and <code>y[j+1]≠x[1]</code>, then <code>y[j+1]≠x[0]</code>, so no occurrence can start at
-                    <code>j+1</code>. If <code>x[0]≠x[1]</code> and <code>y[j+1]=x[1]</code>, then again
-                    <code>y[j+1]≠x[0]</code>. In both cases position <code>j+1</code> is skipped safely, so overlapping
-                    occurrences are never lost.</p>
-            </article>
-            <article>
-                <h3>Complexity</h3>
-                <ul class="cx">
-                    <li><strong>Preprocessing:</strong> O(1) time and space (a single comparison).</li>
-                    <li><strong>Search, worst case:</strong> O(n·m) — e.g. <code>y = aⁿ</code>, <code>x = aᵐ</code>.</li>
-                    <li><strong>Extra space:</strong> O(1), excluding the stored positions.</li>
-                    <li><strong>Average:</strong> slightly sub-linear by a constant factor in the number of comparisons,
-                        thanks to the shifts of 2.</li>
-                </ul>
-                <p class="hint">The counters shown in the results are character comparisons for a given input — an
-                    empirical measure, not the asymptotic time complexity.</p>
-            </article>
-            <article class="span2">
-                <h3>Implementation notes</h3>
-                <p>Business class <code>NotSoNaive</code> (pure Java, no <code>indexOf</code>, regular expressions or
-                    other matchers). Positions are collected in the SEED structure
-                    <code>ufps.util.colecciones_seed.ListaCD</code> (O(1) insertion at the end) and exposed through a
-                    SEED <code>Secuencia</code> for indexed access. One-character patterns have no <code>x[1]</code>,
-                    so each window compares only <code>x[0]</code> and shifts 1. Reference: C. Charras &amp; T. Lecroq,
-                    <a href="https://www-igm.univ-mlv.fr/~lecroq/string/node13.html" target="_blank" rel="noopener">Exact
-                        String Matching Algorithms — Not So Naive</a>.</p>
-            </article>
-        </div>
+        <p id="traceNotice" class="hint" hidden></p>
+        <p id="traceWarning" class="field-error" role="alert" hidden></p>
+        <div id="traceRows" class="trace-rows"></div>
     </section>
 </main>
 
-<footer class="footer">
-    <div class="wrap">
-        <p>UFPS · Systems Engineering · Analysis of Algorithms project by Juan Diego Rojas Rey ·
-            Java 21 · Spring Boot · Apache PDFBox · SEED</p>
-    </div>
-</footer>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <script th:src="@{/js/app.js}" src="/js/app.js"></script>
 </body>

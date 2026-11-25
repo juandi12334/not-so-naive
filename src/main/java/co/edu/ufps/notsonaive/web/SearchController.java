@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
  * validation lives in {@link FileService}, the search in {@link SearchService}
  * (which uses Not So Naive) and the document in {@link PdfService}.
  *
- * <p>The server is stateless: the browser sends the file and pattern both to
+ * <p>The server is stateless: the browser sends the file (or typed text) and pattern both to
  * search and to generate the PDF, and nothing is stored on disk.</p>
  */
 @Controller
@@ -48,23 +48,45 @@ public class SearchController {
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("maxFileBytes", fileService.getMaxBytes());
+        model.addAttribute("traceLimit", SearchService.TRACE_TEXT_LIMIT);
+        model.addAttribute("activePage", "simulator");
         return "index";
+    }
+
+    @GetMapping("/algorithm")
+    public String algorithm(Model model) {
+        model.addAttribute("activePage", "algorithm");
+        return "algorithm";
+    }
+
+    /**
+     * The text to search comes either from an uploaded file or from the text area.
+     * The browser sends only the source the user touched last; a file wins if both arrive.
+     */
+    private TextDocument document(MultipartFile file, String text) {
+        boolean hasFile = file != null && file.getOriginalFilename() != null && !file.getOriginalFilename().isBlank();
+        if (!hasFile && text != null) {
+            return fileService.fromTypedText(text);
+        }
+        return fileService.read(file);
     }
 
     @PostMapping(value = "/api/search", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public SearchResponse search(@RequestParam(value = "file", required = false) MultipartFile file,
-                                      @RequestParam(value = "pattern", required = false) String pattern) {
-        TextDocument document = fileService.read(file);
+                                 @RequestParam(value = "text", required = false) String text,
+                                 @RequestParam(value = "pattern", required = false) String pattern) {
+        TextDocument document = document(file, text);
         SearchResult result = searchService.search(document, pattern);
-        return SearchResponse.of(result, MAX_POSITIONS_IN_RESPONSE, MAX_PREVIEW_CHARS);
+        return SearchResponse.of(result, MAX_POSITIONS_IN_RESPONSE, MAX_PREVIEW_CHARS, SearchService.TRACE_TEXT_LIMIT);
     }
 
     @PostMapping(value = "/api/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<byte[]> pdf(@RequestParam(value = "file", required = false) MultipartFile file,
+                                      @RequestParam(value = "text", required = false) String text,
                                       @RequestParam(value = "pattern", required = false) String pattern) {
-        TextDocument document = fileService.read(file);
+        TextDocument document = document(file, text);
         SearchResult result = searchService.search(document, pattern);
         byte[] pdf = pdfService.generate(result);
         String base = document.fileName().replaceAll("(?i)\\.txt$", "").replaceAll("[^A-Za-z0-9._-]", "_");

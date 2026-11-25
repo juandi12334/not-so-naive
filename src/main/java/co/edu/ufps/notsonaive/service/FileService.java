@@ -73,6 +73,46 @@ public class FileService {
         return parse(name, bytes);
     }
 
+    /** Name shown for text typed in the page instead of an uploaded file. */
+    public static final String TYPED_TEXT_NAME = "typed-text.txt";
+
+    /**
+     * Validates text typed (or pasted) by the user and builds the document. The same
+     * rules as for files apply: not empty, the same size limit, ASCII only, and line
+     * endings normalized to LF.
+     *
+     * @throws InvalidFileException with a user-facing message when invalid
+     */
+    public TextDocument fromTypedText(String text) {
+        if (text == null || text.isEmpty()) {
+            throw new InvalidFileException("The typed text is empty. Type some text or choose a .txt file.");
+        }
+        if (text.length() > maxBytes) {
+            throw new InvalidFileException("The typed text is too long (" + text.length()
+                    + " characters). Maximum allowed: " + maxBytes + " characters.");
+        }
+        int line = 1;
+        int column = 1;
+        byte[] bytes = new byte[text.length()];
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            boolean allowed = (c >= 0x20 && c <= 0x7E) || c == '\t' || c == '\n' || c == '\r';
+            if (!allowed) {
+                throw new InvalidFileException(String.format(Locale.ROOT,
+                        "The typed text is not ASCII: character '%s' (U+%04X) at line %d, column %d is not allowed "
+                                + "(for example an accented letter or ñ).", c, (int) c, line, column));
+            }
+            bytes[i] = (byte) c;
+            if (c == '\n') {
+                line++;
+                column = 1;
+            } else {
+                column++;
+            }
+        }
+        return parse(TYPED_TEXT_NAME, bytes);
+    }
+
     /**
      * Validates raw bytes and builds the document. Public so it can be unit-tested
      * without the web layer.

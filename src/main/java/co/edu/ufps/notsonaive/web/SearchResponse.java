@@ -28,13 +28,19 @@ public record SearchResponse(
         String[] notices,
         String text,
         boolean previewTruncated,
-        TraceRow[] trace) {
+        TraceRow[] trace,
+        int finalJ,
+        int traceLimit) {
 
-    /** One attempt of the step-by-step trace. */
-    public record TraceRow(int j, String outcome, int shift, long comparisons) {
+    /**
+     * One attempt (window) of the step-by-step trace, produced by the real NotSoNaive run.
+     * {@code stopI} is the value of i when the inner loop ended: m when x[2..m-1] all
+     * matched, 1 when the attempt stopped at x[1], 0 for one-character patterns.
+     */
+    public record TraceRow(int j, String outcome, int shift, long comparisons, int stopI) {
     }
 
-    static SearchResponse of(SearchResult r, int maxPositions, int maxPreviewChars) {
+    static SearchResponse of(SearchResult r, int maxPositions, int maxPreviewChars, int traceLimit) {
         TextDocument doc = r.getDocument();
         int count = r.getMatchCount();
         int returned = Math.min(count, maxPositions);
@@ -55,7 +61,7 @@ public record SearchResponse(
             trace = new TraceRow[steps.getTamanio()];
             int t = 0;
             for (TraceStep s : steps) {
-                trace[t++] = new TraceRow(s.j(), s.outcome().name(), s.shift(), s.comparisons());
+                trace[t++] = new TraceRow(s.j(), s.outcome().name(), s.shift(), s.comparisons(), s.stopI());
             }
         }
 
@@ -79,6 +85,8 @@ public record SearchResponse(
                 notices,
                 previewTruncated ? doc.content().substring(0, maxPreviewChars) : doc.content(),
                 previewTruncated,
-                trace);
+                trace,
+                r.getStatistics().getFinalJ(),
+                traceLimit);
     }
 }

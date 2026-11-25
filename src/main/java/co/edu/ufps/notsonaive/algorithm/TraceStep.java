@@ -8,8 +8,11 @@ package co.edu.ufps.notsonaive.algorithm;
  * @param outcome     result of the attempt
  * @param shift       positions the window moved afterwards (k or ell)
  * @param comparisons character comparisons performed in this attempt
+ * @param stopI       value of i when the inner loop over x[2..m-1] ended
+ *                    (m when every x[i] matched); 1 when the attempt stopped at x[1],
+ *                    0 for one-character patterns
  */
-public record TraceStep(int j, Outcome outcome, int shift, long comparisons) {
+public record TraceStep(int j, Outcome outcome, int shift, long comparisons, int stopI) {
 
     /** Result of a single attempt. */
     public enum Outcome {

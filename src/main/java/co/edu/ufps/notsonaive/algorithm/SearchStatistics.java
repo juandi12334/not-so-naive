@@ -19,9 +19,10 @@ public final class SearchStatistics {
     private final int patternLength;
     private final int textLength;
     private final ListaCD<TraceStep> trace;
+    private final int finalJ;
 
     SearchStatistics(ListaCD<Integer> positions, long comparisons, long attempts, int k, int ell,
-                     int patternLength, int textLength, ListaCD<TraceStep> trace) {
+                     int patternLength, int textLength, ListaCD<TraceStep> trace, int finalJ) {
         this.positions = positions;
         this.comparisons = comparisons;
         this.attempts = attempts;
@@ -30,6 +31,12 @@ public final class SearchStatistics {
         this.patternLength = patternLength;
         this.textLength = textLength;
         this.trace = trace;
+        this.finalJ = finalJ;
+    }
+
+    /** @return the value of j when the search loop ended (the first j with j &gt; n - m) */
+    public int getFinalJ() {
+        return finalJ;
     }
 
     /** @return occurrences in increasing order (0-based), as a SEED list */
