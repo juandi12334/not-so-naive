@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> tooLarge(MaxUploadSizeExceededException e) {
-        return error(HttpStatus.PAYLOAD_TOO_LARGE, "The file exceeds the maximum allowed size.");
+        return error(HttpStatus.PAYLOAD_TOO_LARGE, "The file or text exceeds the maximum allowed size (2 MB).");
     }
 
     @ExceptionHandler(MultipartException.class)
@@ -41,6 +41,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(Exception e) {
         return error(HttpStatus.NOT_FOUND, "Not found.");
+    }
+
+    /** Framework errors that already carry a status (405 method not allowed, 415, 400...). */
+    @ExceptionHandler(org.springframework.web.ErrorResponseException.class)
+    public ResponseEntity<ErrorResponse> framework(org.springframework.web.ErrorResponseException e) {
+        return error(HttpStatus.valueOf(e.getStatusCode().value()), "Invalid request.");
+    }
+
+    @ExceptionHandler({org.springframework.web.HttpRequestMethodNotSupportedException.class,
+            org.springframework.web.HttpMediaTypeNotSupportedException.class})
+    public ResponseEntity<ErrorResponse> badMethod(Exception e) {
+        HttpStatus status = e instanceof org.springframework.web.HttpRequestMethodNotSupportedException
+                ? HttpStatus.METHOD_NOT_ALLOWED : HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+        return error(status, "Invalid request: use the simulator page.");
     }
 
     @ExceptionHandler(Exception.class)

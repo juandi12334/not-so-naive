@@ -523,7 +523,7 @@
 
     function toggleAuto(block) {
         if (block.timer) { stopAuto(block); return; }
-        if (block.at === block.steps.length - 1) { block.at = 0; }
+        if (block.at === block.steps.length - 1) { block.at = 0; }   // replay from the start
         block.timer = setInterval(() => {
             if (block.at >= block.steps.length - 1) { stopAuto(block); return; }
             block.at++;
@@ -587,7 +587,7 @@
         d.trace.forEach((t) => {
             const r = row('j = ' + t.j);
             const block = {j: t.j, width, steps: buildSteps(d, t), center: r.querySelector('.trow__scroll'), right: r.querySelector('.trow__right')};
-            block.at = block.steps.length - 1;     // opens at its final step
+            block.at = 0;                          // opens at its first step
             if (block.steps.length > 1) {
                 const ctl = document.createElement('div');
                 ctl.className = 'stepper';

@@ -332,7 +332,6 @@ mark.is-current { outline: 2px solid var(--brand); outline-offset: 1px; }
 .footer__col div { display: grid; grid-template-columns: 5.6rem minmax(0, 1fr); gap: .5rem; padding: .15rem 0; }
 .footer__col dt { font-weight: 600; color: var(--ink-2); }
 .footer__col dd { margin: 0; overflow-wrap: anywhere; }
-.footer__tech { margin: 1rem 0 0; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 960px) {

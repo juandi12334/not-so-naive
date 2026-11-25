@@ -51,7 +51,7 @@ public class FileService {
     public TextDocument read(MultipartFile file) {
         if (file == null || file.isEmpty() && (file.getOriginalFilename() == null
                 || file.getOriginalFilename().isBlank())) {
-            throw new InvalidFileException("No file was selected. Choose a .txt file.");
+            throw new InvalidFileException("No text to search. Choose a .txt file or type your text.");
         }
         String name = file.getOriginalFilename() == null ? "file.txt" : file.getOriginalFilename();
         name = name.replace('\\', '/');

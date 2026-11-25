@@ -17,6 +17,5 @@ public record SiteInfo(
         String university,
         String location,
         String professor,
-        String repository,
-        String techLine) {
+        String repository) {
 }
