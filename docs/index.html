@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not So Naive · String Matching Simulator · UFPS</title>
+<meta name="description" content="Not So Naive exact string matching simulator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a8121a'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='%23fff' text-anchor='middle'%3ENSN%3C/text%3E%3C/svg%3E">
+</head>
+<body data-max-bytes="2097152" data-trace-limit="300">
+<header class="masthead"><div class="wrap masthead__inner">
+<div class="seal" aria-hidden="true"><span>x[1]</span></div>
+<div class="masthead__text"><p class="kicker">FRANCISCO DE PAULA SANTANDER UNIVERSITY</p><p class="program">SYSTEMS ENGINEERING PROGRAM</p><h1>Not So Naive</h1>
+<dl class="meta"><div><dt>COURSE</dt><dd>ANALYSIS OF ALGORITHMS</dd></div><div><dt>ALGORITHM</dt><dd>NOT SO NAIVE</dd></div><div><dt>STUDENT</dt><dd>JUAN DIEGO ROJAS REY</dd></div></dl></div>
+<nav class="masthead__nav" aria-label="Pages"><a href="index.html" class="is-active" aria-current=page>Simulator</a><a href="algorithm/index.html" class="" >Algorithm</a><a href="delivery/index.html" class="" >Delivery (ZIP)</a></nav></div></header>
+<main class="wrap" id="workspace">
+
+    <section class="intro">
+        <p>Exact string matching with the <strong>Not So Naive</strong> algorithm (Hancart, 1992), implemented in pure Java.
+            Upload an ASCII <code>.txt</code> file, type a pattern, and every occurrence (including overlapping ones)
+            is located, highlighted on screen and in a downloadable PDF.</p>
+        <div id="statusPill" class="pill pill--idle" role="status" aria-live="polite">
+            <span class="pill__dot"></span><span id="statusText">No file selected</span>
+        </div>
+    </section>
+
+    <!-- Top row: text, pattern, actions -->
+    <div class="top-grid">
+        <section class="card" aria-labelledby="inTitle">
+            <h2 id="inTitle"><span class="step">1</span> Text file</h2>
+            <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-describedby="dzHelp">
+                <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6h14l10 10v24a2 2 0 0 1-2 2H14a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M28 6v10h10M18 26h12M18 32h8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                <p class="dropzone__title">Drag &amp; drop a <code>.txt</code> file here</p>
+                <p id="dzHelp" class="dropzone__help">ASCII text only · up to <span id="maxSize">2 MB</span></p>
+                <button type="button" id="pickBtn" class="btn btn--ghost">Choose file</button>
+                <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
+            </div>
+            <div id="fileCard" class="filecard" hidden>
+                <div class="filecard__icon" aria-hidden="true">TXT</div>
+                <div class="filecard__info">
+                    <p id="fileName" class="filecard__name"></p>
+                    <p id="fileSize" class="filecard__size"></p>
+                </div>
+                <button type="button" id="changeBtn" class="btn btn--link">Change</button>
+            </div>
+            <p id="fileError" class="field-error" role="alert" hidden></p>
+
+            <label for="typedText" class="typed-label">Or type your text</label>
+            <textarea id="typedText" class="input typed-text" rows="3" spellcheck="false"
+                      placeholder="Type or paste your text here"></textarea>
+            <p id="textError" class="field-error" role="alert" hidden></p>
+        </section>
+
+        <section class="card" aria-labelledby="patTitle">
+            <h2 id="patTitle"><span class="step">2</span> Pattern</h2>
+            <label for="pattern" class="label">Text to search (exact, case-sensitive)</label>
+            <input id="pattern" class="input" type="text" maxlength="1000" autocomplete="off" spellcheck="false"
+                   placeholder="e.g. ANA" aria-describedby="patternPreview">
+            <div id="patternPreview" class="pattern-preview">
+                <span class="pattern-preview__label">You will search:</span>
+                <code id="patternShown" class="pattern-preview__value">—</code>
+                <span id="patternLen" class="pattern-preview__len"></span>
+            </div>
+            <p id="patternError" class="field-error" role="alert" hidden></p>
+        </section>
+
+        <section class="card card--actions" aria-labelledby="exTitle">
+            <h2 id="exTitle"><span class="step">3</span> Execute</h2>
+            <button type="button" id="searchBtn" class="btn btn--primary btn--block" disabled>
+                <span class="btn__label">Run Not So Naive search</span>
+                <span class="spinner" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="pdfBtn" class="btn btn--secondary btn--block" disabled>
+                <span class="btn__label">Print / Save PDF</span>
+                <span class="spinner spinner--dark" aria-hidden="true"></span>
+            </button>
+            <p class="hint actions__caption">Opens a print-ready report. Choose “Save as PDF” in your browser to download it.</p>
+            <p id="pdfStatus" class="hint actions__status" role="status" aria-live="polite"></p>
+        </section>
+    </div>
+
+    <!-- Results -->
+    <section class="card results" aria-label="Results">
+        <div id="resultsEmpty" class="empty"><p>Results will appear here after the search.</p></div>
+        <div id="processing" class="processing" hidden>
+            <div class="scan" aria-hidden="true"><span></span></div>
+            <p>Running Not So Naive in your browser…</p>
+        </div>
+        <div id="errorBox" class="errorbox" role="alert" hidden>
+            <strong>Processing error</strong>
+            <p id="errorText"></p>
+        </div>
+        <div id="results" hidden>
+            <div class="results__bar">
+                <span id="occChip" class="occ-chip">Occurrences: 0</span>
+                <div class="results__positions">
+                    <span class="results__label">Positions:</span>
+                    <div id="positions" class="positions"></div>
+                </div>
+                <div class="navmatch">
+                    <button type="button" class="btn btn--small" id="prevMatch" aria-label="Previous occurrence">↑</button>
+                    <span id="matchNav">–</span>
+                    <button type="button" class="btn btn--small" id="nextMatch" aria-label="Next occurrence">↓</button>
+                </div>
+            </div>
+            <p class="legend"><mark class="d1">match</mark> exact occurrence ·
+                <mark class="d2">overlap</mark> characters shared by overlapping occurrences</p>
+            <p id="previewNote" class="hint" hidden></p>
+            <pre id="preview" class="preview" tabindex="0"></pre>
+        </div>
+    </section>
+
+    <!-- Step-by-step trace -->
+    <section class="card trace-card" id="traceSection" aria-labelledby="trTitle" hidden>
+        <div class="card__head">
+            <h2 id="trTitle">Step-by-step trace</h2>
+            <span id="traceCounter" class="occ-chip" aria-live="polite">Matches: 0</span>
+        </div>
+        <p id="traceNotice" class="hint" hidden></p>
+        <p id="traceWarning" class="field-error" role="alert" hidden></p>
+        <div id="traceRows" class="trace-rows"></div>
+    </section>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer__grid">
+<dl class="footer__col"><div><dt>Student</dt><dd>Juan Diego Rojas Rey</dd></div><div><dt>Email</dt><dd>—</dd></div><div><dt>Date</dt><dd>2026</dd></div></dl>
+<dl class="footer__col"><div><dt>Course</dt><dd>Analysis of Algorithms</dd></div><div><dt>Program</dt><dd>Systems Engineering</dd></div><div><dt>Professor</dt><dd>—</dd></div></dl>
+<dl class="footer__col"><div><dt>University</dt><dd>UFPS</dd></div><div><dt>Location</dt><dd>Cúcuta, Colombia</dd></div><div><dt>Repository</dt><dd><a href="https://github.com/juandi12334/nat-so-naive" target="_blank" rel="noopener">GitHub</a></dd></div></dl>
+</div></div></footer>
+<script src="js/not-so-naive.js"></script>
+<script src="js/app.js"></script>
+</body></html>

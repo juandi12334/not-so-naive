@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Not So Naive algorithm · UFPS</title>
+<meta name="description" content="Not So Naive exact string matching simulator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23a8121a'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' fill='%23fff' text-anchor='middle'%3ENSN%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<header class="masthead"><div class="wrap masthead__inner">
+<div class="seal" aria-hidden="true"><span>x[1]</span></div>
+<div class="masthead__text"><p class="kicker">FRANCISCO DE PAULA SANTANDER UNIVERSITY</p><p class="program">SYSTEMS ENGINEERING PROGRAM</p><h1>The algorithm</h1>
+<dl class="meta"><div><dt>COURSE</dt><dd>ANALYSIS OF ALGORITHMS</dd></div><div><dt>ALGORITHM</dt><dd>NOT SO NAIVE</dd></div><div><dt>STUDENT</dt><dd>JUAN DIEGO ROJAS REY</dd></div></dl></div>
+<nav class="masthead__nav" aria-label="Pages"><a href="../index.html" class="" >Simulator</a><a href="../algorithm/index.html" class="is-active" aria-current=page>Algorithm</a><a href="../delivery/index.html" class="" >Delivery (ZIP)</a></nav></div></header>
+<main class="wrap doc">
+
+    <section class="card">
+        <h2>Idea and origin</h2>
+        <p><strong>Not So Naive</strong> is an exact string-matching algorithm proposed by Christophe Hancart in 1992
+            and collected by C. Charras and T. Lecroq in <em>Exact String Matching Algorithms</em>. Given a text
+            <code>y</code> of length <em>n</em> and a pattern <code>x</code> of length <em>m</em>, it reports every
+            position where <code>x</code> occurs in <code>y</code>, including overlapping occurrences.</p>
+        <p>Like the naive algorithm, it slides a window of length <em>m</em> over the text and compares the pattern
+            with the characters under the window. The naive algorithm compares from left to right and always moves the
+            window one position. Not So Naive changes only two things: it compares the pattern positions in the order
+            <strong>1, 2, …, m−1</strong> and finally <strong>0</strong>, and, thanks to that first comparison of
+            <code>x[1]</code>, it can sometimes move the window <strong>two</strong> positions instead of one.</p>
+        <p>The name says it all: it is still a simple, brute-force style algorithm, but it is “not so naive”,
+            because a single observation about the pattern lets it skip positions where no occurrence can start.</p>
+    </section>
+
+    <section class="card">
+        <h2>Preprocessing</h2>
+        <p>Before searching, the algorithm compares the first two characters of the pattern once and fixes two shifts:</p>
+        <table class="kell">
+            <thead><tr><th>Condition</th><th>k</th><th>ell</th></tr></thead>
+            <tbody>
+            <tr><td><code>x[0] == x[1]</code></td><td>2</td><td>1</td></tr>
+            <tr><td><code>x[0] != x[1]</code></td><td>1</td><td>2</td></tr>
+            </tbody>
+        </table>
+        <p><code>k</code> is the shift when <code>x[1] ≠ y[j+1]</code>. <code>ell</code> is the shift when
+            <code>x[1] = y[j+1]</code>, whether or not an occurrence was found. This phase takes
+            <strong>O(1)</strong> time and space: one comparison, whatever the size of the input.</p>
+    </section>
+
+    <section class="card">
+        <h2>Searching phase</h2>
+<pre class="code">j ← 0
+while j ≤ n − m:
+    if x[1] ≠ y[j+1]:
+        j ← j + k
+    else:
+        if x[2..m−1] = y[j+2..j+m−1] and x[0] = y[j]:
+            report j
+        j ← j + ell</pre>
+
+        <h3>Worked example: <code>ANA</code> in <code>BANXANA</code></h3>
+        <p>Here <code>x[0] = A ≠ N = x[1]</code>, so <code>k = 1</code> and <code>ell = 2</code>, and the last
+            possible start is <code>n − m = 7 − 3 = 4</code>.</p>
+        <div class="example-legend">
+            <span><span class="cell cell--eq">A</span>equal characters</span>
+            <span><span class="cell cell--ne cell--pat">N</span>pattern character that differs</span>
+            <span><span class="cell cell--ne cell--txt">A</span>text character that differs</span>
+        </div>
+        <div class="trace-rows">
+            <div class="trow">
+                <div class="trow__left">j = 0</div>
+                <div class="trow__center"><div class="trow__scroll">
+                    <div class="cells"><span class="cell">B</span><span class="cell cell--ne cell--txt">A</span><span class="cell">N</span><span class="cell">X</span><span class="cell">A</span><span class="cell">N</span><span class="cell">A</span></div>
+                    <div class="cells"><span class="cell">A</span><span class="cell cell--ne cell--pat">N</span><span class="cell">A</span></div>
+                </div></div>
+                <div class="trow__right">
+                    <div class="code-line">x[1] vs y[1]: <span class="pat">N</span> ≠ <span class="txt">A</span></div>
+                    <div class="code-line"><span class="bad">Mismatch on x[1]</span> → j = 0 + k = 1</div>
+                </div>
+            </div>
+            <div class="trow">
+                <div class="trow__left">j = 1</div>
+                <div class="trow__center"><div class="trow__scroll">
+                    <div class="cells"><span class="cell">B</span><span class="cell">A</span><span class="cell cell--done">N</span><span class="cell cell--ne cell--txt">X</span><span class="cell">A</span><span class="cell">N</span><span class="cell">A</span></div>
+                    <div class="cells"><span class="cell cell--empty"></span><span class="cell">A</span><span class="cell cell--done">N</span><span class="cell cell--ne cell--pat">A</span></div>
+                </div></div>
+                <div class="trow__right">
+                    <div class="code-line">x[1] = y[2]: <span class="ok">N</span> = <span class="ok">N</span></div>
+                    <div class="code-line">i = 2: <span class="pat">A</span> ≠ <span class="txt">X</span></div>
+                    <div class="code-line"><span class="bad">Partial match</span> → j = 1 + ell = 3</div>
+                </div>
+            </div>
+            <div class="trow">
+                <div class="trow__left">j = 3</div>
+                <div class="trow__center"><div class="trow__scroll">
+                    <div class="cells"><span class="cell">B</span><span class="cell">A</span><span class="cell">N</span><span class="cell">X</span><span class="cell cell--ne cell--txt">A</span><span class="cell">N</span><span class="cell">A</span></div>
+                    <div class="cells"><span class="cell cell--empty"></span><span class="cell cell--empty"></span><span class="cell cell--empty"></span><span class="cell">A</span><span class="cell cell--ne cell--pat">N</span><span class="cell">A</span></div>
+                </div></div>
+                <div class="trow__right">
+                    <div class="code-line">x[1] vs y[4]: <span class="pat">N</span> ≠ <span class="txt">A</span></div>
+                    <div class="code-line"><span class="bad">Mismatch on x[1]</span> → j = 3 + k = 4</div>
+                </div>
+            </div>
+            <div class="trow">
+                <div class="trow__left">j = 4</div>
+                <div class="trow__center"><div class="trow__scroll">
+                    <div class="cells"><span class="cell">B</span><span class="cell">A</span><span class="cell">N</span><span class="cell">X</span><span class="cell cell--eq">A</span><span class="cell cell--eq">N</span><span class="cell cell--eq">A</span></div>
+                    <div class="cells"><span class="cell cell--empty"></span><span class="cell cell--empty"></span><span class="cell cell--empty"></span><span class="cell cell--empty"></span><span class="cell cell--eq">A</span><span class="cell cell--eq">N</span><span class="cell cell--eq">A</span></div>
+                </div></div>
+                <div class="trow__right">
+                    <div class="code-line">x[1], x[2], then x[0]: all equal</div>
+                    <div class="code-line"><span class="badge-match">Match at position 4</span></div>
+                    <div class="code-line">j = 4 + ell = 6</div>
+                </div>
+            </div>
+            <div class="trow trow--end">
+                <div class="trow__left">j = 6</div>
+                <div class="trow__right">
+                    <div class="code-line">j &gt; n − m → 6 &gt; 4</div>
+                    <div class="code-line end-msg">The pattern no longer fits in the text, so the algorithm ends. Result: one match, at position 4.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Why a shift of 2 is safe</h2>
+        <p>An occurrence can start at position <code>j+1</code> only if <code>y[j+1] = x[0]</code>. The algorithm
+            already knows <code>y[j+1]</code>, because it has just compared it with <code>x[1]</code>:</p>
+        <ul class="cx">
+            <li>If <code>x[0] ≠ x[1]</code> and <code>y[j+1] = x[1]</code>, then <code>y[j+1] ≠ x[0]</code>:
+                no occurrence starts at <code>j+1</code>, so moving <code>ell = 2</code> is safe.</li>
+            <li>If <code>x[0] = x[1]</code> and <code>y[j+1] ≠ x[1]</code>, then <code>y[j+1] ≠ x[0]</code> as well:
+                moving <code>k = 2</code> is safe.</li>
+        </ul>
+        <p>In every other case the window moves only one position, exactly like the naive algorithm. Position
+            <code>j+1</code> is skipped only when it cannot be the start of an occurrence, so no occurrence is ever
+            lost, overlapping ones included.</p>
+    </section>
+
+    <section class="card">
+        <h2>Complexity</h2>
+        <ul class="cx">
+            <li><strong>Preprocessing:</strong> O(1) time and space, a single comparison of <code>x[0]</code> and <code>x[1]</code>.</li>
+            <li><strong>Search, worst case:</strong> O(n·m). At most <code>n − m + 1</code> windows and at most
+                <code>m</code> comparisons per window, for example <code>y = aⁿ</code>, <code>x = aᵐ</code>, where it
+                never moves 2 and does the same work as the naive algorithm.</li>
+            <li><strong>Extra space:</strong> O(1): only <code>k</code>, <code>ell</code>, <code>j</code> and
+                <code>i</code>, excluding the stored positions.</li>
+            <li><strong>Average:</strong> slightly sub-linear by a constant factor in the number of comparisons. The
+                gain depends on the pattern: it is largest when <code>x[0] = x[1]</code>, because then it moves 2 on
+                the common event (a mismatch on <code>x[1]</code>), up to about half the comparisons of the naive search.</li>
+        </ul>
+        <p class="hint">Comparison counts for a given input are an empirical measure; the asymptotic time complexity
+            is O(n·m) for both algorithms, because Big-O ignores constant factors.</p>
+    </section>
+
+    <section class="card">
+        <h2>Base code</h2>
+        <p>The whole algorithm in one method, without counters, trace or framework code:</p>
+<pre class="code">public static List&lt;Integer&gt; notSoNaive(String y, String x) {
+    int n = y.length(), m = x.length();
+    List&lt;Integer&gt; positions = new ArrayList&lt;&gt;();
+    if (m == 0 || m &gt; n) return positions;
+
+    if (m == 1) {                                   <span class="cm">// no x[1]: compare x[0] only, shift 1</span>
+        for (int j = 0; j &lt; n; j++)
+            if (y.charAt(j) == x.charAt(0)) positions.add(j);
+        return positions;
+    }
+
+    int k, ell;                                     <span class="cm">// preprocessing, O(1)</span>
+    if (x.charAt(0) == x.charAt(1)) { k = 2; ell = 1; }
+    else                            { k = 1; ell = 2; }
+
+    int j = 0;
+    while (j &lt;= n - m) {
+        if (x.charAt(1) != y.charAt(j + 1)) {       <span class="cm">// first comparison fails</span>
+            j += k;
+        } else {
+            int i = 2;                              <span class="cm">// compare x[2..m-1] with the text</span>
+            while (i &lt; m &amp;&amp; x.charAt(i) == y.charAt(j + i)) i++;
+            if (i == m &amp;&amp; x.charAt(0) == y.charAt(j)) positions.add(j);   <span class="cm">// x[0] is checked last</span>
+            j += ell;
+        }
+    }
+    return positions;
+}</pre>
+        <ul class="code-notes">
+            <li><strong>Guards:</strong> an empty pattern or a pattern longer than the text has no occurrences.</li>
+            <li><strong>m = 1:</strong> there is no <code>x[1]</code>, so every window compares only <code>x[0]</code> and moves 1.</li>
+            <li><strong>Preprocessing:</strong> one comparison fixes <code>k</code> and <code>ell</code>.</li>
+            <li><strong>Loop:</strong> runs while the pattern still fits (<code>j ≤ n − m</code>).</li>
+            <li><strong>First comparison:</strong> <code>x[1]</code> against <code>y[j+1]</code>; on a mismatch the window moves <code>k</code>.</li>
+            <li><strong>Rest:</strong> <code>i</code> walks <code>x[2] … x[m−1]</code>; <code>x[0]</code> is checked last; then the window moves <code>ell</code>.</li>
+        </ul>
+        <p class="hint">The project’s own class, <code>NotSoNaive</code>, runs exactly this logic, but stores the
+            positions in the SEED structures <code>ListaCD</code> and <code>Secuencia</code> and records the trace
+            shown in the simulator.</p>
+    </section>
+
+    <section class="card">
+        <h2>Implementation notes</h2>
+        <p>Business class <code>NotSoNaive</code> (pure Java, no <code>indexOf</code>, regular expressions or other
+            matchers). Positions are collected in the SEED structure <code>ufps.util.colecciones_seed.ListaCD</code>
+            (O(1) insertion at the end) and exposed through a SEED <code>Secuencia</code> for indexed access. The step-by-step
+            trace of the simulator is produced by the same class, so the trace and the reported positions always agree.
+            Reference: C. Charras &amp; T. Lecroq,
+            <a href="https://www-igm.univ-mlv.fr/~lecroq/string/node13.html" target="_blank" rel="noopener">Exact
+                String Matching Algorithms: Not So Naive</a>.</p>
+        <p>Source code: <a href="https://github.com/juandi12334/nat-so-naive" target="_blank" rel="noopener">GitHub repository</a></p>
+    </section>
+</main>
+
+<footer class="footer"><div class="wrap"><div class="footer__grid">
+<dl class="footer__col"><div><dt>Student</dt><dd>Juan Diego Rojas Rey</dd></div><div><dt>Email</dt><dd>—</dd></div><div><dt>Date</dt><dd>2026</dd></div></dl>
+<dl class="footer__col"><div><dt>Course</dt><dd>Analysis of Algorithms</dd></div><div><dt>Program</dt><dd>Systems Engineering</dd></div><div><dt>Professor</dt><dd>—</dd></div></dl>
+<dl class="footer__col"><div><dt>University</dt><dd>UFPS</dd></div><div><dt>Location</dt><dd>Cúcuta, Colombia</dd></div><div><dt>Repository</dt><dd><a href="https://github.com/juandi12334/nat-so-naive" target="_blank" rel="noopener">GitHub</a></dd></div></dl>
+</div></div></footer>
+</body></html>
