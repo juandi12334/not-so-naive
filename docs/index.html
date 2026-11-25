@@ -75,10 +75,10 @@
                 <span class="spinner" aria-hidden="true"></span>
             </button>
             <button type="button" id="pdfBtn" class="btn btn--secondary btn--block" disabled>
-                <span class="btn__label">Print / Save PDF</span>
+                <span class="btn__label">Download PDF</span>
                 <span class="spinner spinner--dark" aria-hidden="true"></span>
             </button>
-            <p class="hint actions__caption">Opens a print-ready report. Choose “Save as PDF” in your browser to download it.</p>
+            <p class="hint actions__caption">Downloads a PDF report directly to your device.</p>
             <p id="pdfStatus" class="hint actions__status" role="status" aria-live="polite"></p>
         </section>
     </div>
@@ -127,10 +127,11 @@
 </main>
 
 <footer class="footer"><div class="wrap"><div class="footer__grid">
-<dl class="footer__col"><div><dt>Student</dt><dd>Juan Diego Rojas Rey</dd></div><div><dt>Email</dt><dd>—</dd></div><div><dt>Date</dt><dd>2026</dd></div></dl>
-<dl class="footer__col"><div><dt>Course</dt><dd>Analysis of Algorithms</dd></div><div><dt>Program</dt><dd>Systems Engineering</dd></div><div><dt>Professor</dt><dd>—</dd></div></dl>
+<dl class="footer__col"><div><dt>Student</dt><dd>Juan Diego Rojas Rey</dd></div><div><dt>Email</dt><dd><a href="mailto:juandiegorore@ufps.edu.co">juandiegorore@ufps.edu.co</a></dd></div><div><dt>Date</dt><dd>2026</dd></div></dl>
+<dl class="footer__col"><div><dt>Course</dt><dd>Analysis of Algorithms</dd></div><div><dt>Program</dt><dd>Systems Engineering</dd></div><div><dt>Professor</dt><dd>Marco Antonio Adarme Jaimes</dd></div></dl>
 <dl class="footer__col"><div><dt>University</dt><dd>UFPS</dd></div><div><dt>Location</dt><dd>Cúcuta, Colombia</dd></div><div><dt>Repository</dt><dd><a href="https://github.com/juandi12334/nat-so-naive" target="_blank" rel="noopener">GitHub</a></dd></div></dl>
 </div></div></footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="js/not-so-naive.js"></script>
 <script src="js/app.js"></script>
 </body></html>

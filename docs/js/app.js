@@ -663,44 +663,97 @@
         updateTraceCounter();
     }
 
-    // ---------- Browser-native PDF (Print / Save as PDF) ----------
+    // ---------- PDF download (client-side, no Java/Spring endpoint) ----------
     els.pdfBtn.addEventListener('click', () => {
         if (els.pdfBtn.disabled || !state.last) return;
-        const d = state.last, text = state.fullText || d.text, positions = state.fullPositions || d.positions;
-        const m = d.patternLength, escHtml = (s) => esc(s).replace(/'/g, '&#39;');
-        const marks = [];
-        let cursor = 0;
-        positions.forEach((p) => {
-            if (p < cursor) return;
-            marks.push(escHtml(text.slice(cursor, p)));
-            marks.push('<mark>' + escHtml(text.slice(p, p + m)) + '</mark>');
-            cursor = p + m;
-        });
-        marks.push(escHtml(text.slice(cursor)));
-        const popup = window.open('', '_blank');
-        if (!popup) {
-            els.pdfStatus.textContent = 'Allow pop-ups to open the printable report.';
+        const d = state.last;
+        const text = state.fullText || d.text || '';
+        const positions = state.fullPositions || d.positions || [];
+        const JsPDF = window.jspdf && window.jspdf.jsPDF;
+        if (!JsPDF) {
+            els.pdfStatus.textContent = 'The PDF library could not be loaded. Check your internet connection and reload the page.';
             return;
         }
-        const safeName = (d.fileName || 'typed-text.txt').replace(/\.txt$/i, '').replace(/[^A-Za-z0-9._-]/g, '_');
-        popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Not So Naive report</title>
-<style>
-body{font:12px/1.55 Arial,sans-serif;margin:28px;color:#222}h1{font-size:22px;margin:0 0 6px}
-.meta{color:#555;margin-bottom:18px}.stats{border-collapse:collapse;margin:12px 0 20px}.stats td{border:1px solid #ccc;padding:6px 10px}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.5 Consolas,monospace;border:1px solid #ddd;padding:14px}
-mark{background:#ffd23f;color:#111;font-weight:bold}
-@media print{body{margin:12mm}a{color:inherit}}
-</style></head><body><h1>Not So Naive — Search report</h1>
-<div class="meta">File: ${escHtml(d.fileName)} · Pattern: <b>${escHtml(d.pattern)}</b></div>
-<table class="stats"><tr><td>Occurrences</td><td>${fmt(d.matchCount)}</td><td>Comparisons</td><td>${fmt(d.comparisons)}</td></tr>
-<tr><td>Attempts</td><td>${fmt(d.attempts)}</td><td>k / ell</td><td>${d.k} / ${d.ell}</td></tr>
-<tr><td>Text length</td><td>${fmt(d.textLength)}</td><td>Execution</td><td>${d.elapsedMillis.toFixed(3)} ms</td></tr></table>
-<p><b>Positions (0-based):</b> ${positions.length === d.matchCount ? positions.join(', ') : positions.join(', ') + ' … (list truncated on screen)'}</p>
-<h2>Text with matches highlighted</h2><pre>${marks.join('')}</pre>
-<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));<\/script></body></html>`);
-        popup.document.close();
-        els.pdfStatus.textContent = 'Print dialog opened. Choose “Save as PDF” as the destination.';
-        setStatus('done', 'Printable report ready');
+
+        try {
+            const doc = new JsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 16;
+            const usableWidth = pageWidth - margin * 2;
+            let y = 18;
+
+            const addPageIfNeeded = (height) => {
+                if (y + height > pageHeight - 16) {
+                    doc.addPage();
+                    y = 18;
+                }
+            };
+            const addWrapped = (value, options = {}) => {
+                const fontSize = options.fontSize || 9;
+                doc.setFont('helvetica', options.bold ? 'bold' : 'normal');
+                doc.setFontSize(fontSize);
+                const lines = doc.splitTextToSize(String(value), usableWidth);
+                const lineHeight = options.lineHeight || fontSize * 0.48;
+                lines.forEach((line) => {
+                    addPageIfNeeded(lineHeight + 1);
+                    doc.text(line, margin, y);
+                    y += lineHeight;
+                });
+                y += options.after === undefined ? 2 : options.after;
+            };
+
+            doc.setProperties({
+                title: 'Not So Naive - Search report',
+                subject: 'Not So Naive string matching simulation',
+                author: 'Juan Diego Rojas Rey',
+                creator: 'Not So Naive Simulator'
+            });
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text('Not So Naive - Search report', margin, y);
+            y += 9;
+            doc.setDrawColor(168, 18, 26);
+            doc.setLineWidth(0.8);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 8;
+
+            addWrapped('File: ' + (d.fileName || 'typed-text.txt'), {bold: true, fontSize: 10});
+            addWrapped('Pattern: "' + d.pattern + '"    |    Pattern length: ' + d.patternLength);
+            addWrapped('Occurrences: ' + d.matchCount + '    |    Comparisons: ' + d.comparisons + '    |    Attempts: ' + d.attempts);
+            addWrapped('Shift values: k = ' + d.k + ', ell = ' + d.ell + '    |    Execution time: ' + Number(d.elapsedMillis || 0).toFixed(3) + ' ms');
+            addWrapped('Text length: ' + d.textLength + ' characters    |    Lines: ' + (d.lineCount || text.split('\n').length));
+            y += 2;
+            addWrapped('Match positions (zero-based):', {bold: true, fontSize: 11});
+            if (positions.length) {
+                const posText = positions.join(', ') + (positions.length < d.matchCount ? ' ...' : '');
+                addWrapped(posText, {fontSize: 8});
+            } else {
+                addWrapped('No matches found.', {fontSize: 9});
+            }
+            y += 3;
+            addWrapped('Input text', {bold: true, fontSize: 12});
+            // Keep the complete text in the PDF. jsPDF wraps it across pages.
+            addWrapped(text, {fontSize: 8, lineHeight: 4});
+
+            // Add page numbers to every page.
+            const pageCount = doc.getNumberOfPages();
+            for (let page = 1; page <= pageCount; page++) {
+                doc.setPage(page);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(110);
+                doc.text('Not So Naive | Page ' + page + ' of ' + pageCount, pageWidth - margin, pageHeight - 8, {align: 'right'});
+            }
+
+            const baseName = (d.fileName || 'typed-text').replace(/\.txt$/i, '').replace(/[^A-Za-z0-9._-]/g, '_') || 'search';
+            doc.save('not-so-naive-' + baseName + '-report.pdf');
+            els.pdfStatus.textContent = 'PDF downloaded successfully.';
+            setStatus('done', 'PDF downloaded');
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+            els.pdfStatus.textContent = 'Could not generate the PDF: ' + (err.message || String(err));
+        }
     });
 
     renderPattern();
