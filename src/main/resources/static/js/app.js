@@ -504,7 +504,8 @@
     function updateTraceCounter() {
         const blocks = state.blocks || [];
         const visible = blocks.filter((b) => b.steps[b.at].match).length;
-        els.traceCounter.textContent = 'Matches: ' + fmt(visible);
+        const total = blocks.filter((b) => b.steps[b.steps.length - 1].match).length;
+        els.traceCounter.textContent = 'Matches: ' + fmt(visible) + ' / ' + fmt(total);
         els.traceCounter.classList.toggle('occ-chip--ok', visible > 0);
     }
 
